@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { Brand } from "@/components/brand";
+import { GitHubStar } from "@/components/layout/github-star";
+import { ShareButton } from "@/components/layout/share-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 
@@ -29,7 +31,10 @@ export function SiteHeader() {
               {item.label}
             </Button>
           ))}
-          <ThemeToggle className="ml-1" />
+          <span className="bg-border mx-1.5 hidden h-5 w-px sm:block" />
+          <GitHubStar className="ml-0.5" />
+          <ShareButton />
+          <ThemeToggle />
           <Button
             size="sm"
             nativeButton={false}
