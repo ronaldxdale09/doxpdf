@@ -79,7 +79,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   numPages: 0,
   currentPage: 1,
   zoom: DEFAULT_ZOOM,
-  fitMode: "width",
+  fitMode: "custom",
   defaultPageSize: null,
   pageSizes: {},
   pdfProxy: null,
@@ -116,7 +116,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       pages: [],
       scrollRequest: null,
       zoom: DEFAULT_ZOOM,
-      fitMode: "width",
+      fitMode: "custom",
     }),
 
   setNumPages: (n) =>
