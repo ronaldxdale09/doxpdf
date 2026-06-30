@@ -18,6 +18,7 @@ import { STAMP_PRESETS } from "@/lib/annotations/defaults";
 import type { Annotation } from "@/types/annotations";
 
 import { fontKey } from "./fonts/embeddable";
+import { type Align, layoutParagraph } from "./reflow/layout";
 
 interface Fonts {
   normal: PDFFont;
@@ -232,6 +233,36 @@ export async function drawAnnotation(
       const text = a.text?.trim();
       if (!text) break;
       const size = a.fontSize ?? 16;
+
+      // Reflowable paragraph: lay out with the shared engine, draw word-by-word.
+      if (a.reflow && a.reflowFontId) {
+        const rfont = customFonts?.get(a.reflowFontId);
+        if (rfont) {
+          const lineHeight = a.lineHeight ?? size * 1.2;
+          const align = (a.align ?? "left") as Align;
+          const ascent = rfont.heightAtSize(size, { descender: false });
+          const firstBaseline = H - a.y - ascent;
+          const lo = layoutParagraph(
+            text,
+            (s) => rfont.widthOfTextAtSize(s, size),
+            a.width,
+            align,
+          );
+          for (const p of lo.placements) {
+            page.drawText(p.word, {
+              x: a.x + p.x,
+              y: firstBaseline - p.line * lineHeight,
+              size,
+              font: rfont,
+              color,
+              opacity,
+            });
+          }
+          break;
+        }
+        // no reflow font embedded — fall through to a plain single-line draw
+      }
+
       // Prefer an embedded metric-compatible face (exact widths); else base-14.
       const font =
         customFonts?.get(fontKey(a.fontCategory, !!a.bold, !!a.italic)) ??

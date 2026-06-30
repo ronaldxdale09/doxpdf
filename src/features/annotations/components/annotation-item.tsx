@@ -5,6 +5,7 @@ import { Rnd } from "react-rnd";
 
 import { STAMP_PRESETS } from "@/lib/annotations/defaults";
 import { translatePoints } from "@/lib/annotations/geometry";
+import { ReflowBlock } from "@/features/text-edit/reflow-block";
 import type { Annotation, AnnotationType } from "@/types/annotations";
 
 const RESIZABLE: Record<AnnotationType, boolean> = {
@@ -204,7 +205,11 @@ function AnnotationVisual({
 }) {
   switch (a.type) {
     case "text":
-      return <TextVisual a={a} scale={scale} editing={editing} onChange={onChange} onEndEdit={onEndEdit} />;
+      return a.reflow ? (
+        <ReflowBlock a={a} scale={scale} editing={editing} onChange={onChange} onEndEdit={onEndEdit} />
+      ) : (
+        <TextVisual a={a} scale={scale} editing={editing} onChange={onChange} onEndEdit={onEndEdit} />
+      );
     case "draw":
       return <PathVisual a={a} scale={scale} />;
     case "line":

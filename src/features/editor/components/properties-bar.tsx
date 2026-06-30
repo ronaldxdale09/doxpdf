@@ -211,8 +211,10 @@ export function PropertiesBar() {
               onClick={() => {
                 if (!target) return;
                 const order = ["left", "center", "right"] as const;
-                const next =
-                  order[(order.indexOf(target.align ?? "left") + 1) % 3];
+                const cur = order.indexOf(
+                  (target.align ?? "left") as (typeof order)[number],
+                );
+                const next = order[(cur + 1) % 3];
                 commit();
                 update(target.id, { align: next });
               }}

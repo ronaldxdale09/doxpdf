@@ -23,6 +23,8 @@ export interface FontIdentity extends FontClass {
    * `style.fontFamily`; unresolved families are skipped by the browser.
    */
   cssFamily: string;
+  /** The embedded font program (OpenType) if any — for reflow measure + embed. */
+  embeddedBytes?: Uint8Array;
 }
 
 /** Shape of the bits we read off a PDF.js font object (loosely typed upstream). */
@@ -123,5 +125,11 @@ export async function identifyFont(
   // De-duplicate while preserving order, then join into one valid stack.
   const seen = new Set<string>();
   const stack = families.filter((f) => f && !seen.has(f) && seen.add(f));
-  return { ...cls, realName, cssFamily: stack.join(", ") };
+
+  const embeddedBytes =
+    font && !font.isType3Font && font.data && font.data.byteLength > 0
+      ? font.data.slice()
+      : undefined;
+
+  return { ...cls, realName, cssFamily: stack.join(", "), embeddedBytes };
 }

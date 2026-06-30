@@ -6,6 +6,8 @@ import { createAnnotation } from "@/lib/annotations/defaults";
 import { displaySize } from "@/lib/annotations/geometry";
 import { sampleRunColors } from "@/lib/pdf/canvas-sample";
 import { identifyFont } from "@/lib/pdf/fonts/identify";
+import { resolveReflowFont } from "@/lib/pdf/reflow/fonts";
+import { findParagraphAt, getPageParagraphs } from "@/lib/pdf/text-blocks";
 import { findTextRunAt } from "@/lib/pdf/text-hit";
 import { useAnnotationStore } from "@/store/annotation-store";
 import { useDocumentStore } from "@/store/document-store";
@@ -17,19 +19,16 @@ const PAD_X = 1;
 const DESCENDER_PAD = 0.25; // fraction of font size, for glyph descenders
 
 /**
- * Returns a double-click handler for a page slot that turns the clicked PDF text
- * into an editable, font-matched overlay (cover & replace). Wired only for
- * unrotated source slots; everything else is a no-op so normal interactions and
- * existing annotations are untouched. See `docs/inline-text-editing.md`.
+ * Double-click handler that turns clicked PDF text into an editable overlay.
+ * A safely-reflowable paragraph becomes a live-rewrapping block; everything else
+ * falls back to single-run cover & replace. Wired only for unrotated source
+ * slots. See `docs/reflow-text-editing.md` and `docs/inline-text-editing.md`.
  */
 export function useInlineTextEdit(slot: PageSlot) {
   return useCallback(
     async (e: React.MouseEvent<HTMLElement>) => {
-      // Only in select mode, on a real (unrotated) source page.
       if (useEditorStore.getState().activeTool !== "select") return;
       if (slot.src <= 0 || slot.rotation !== 0) return;
-
-      // Let existing annotations handle their own double-click (edit/select).
       if ((e.target as HTMLElement).closest("[data-annotation]")) return;
 
       const { pdfProxy, pageSizes, defaultPageSize, file } =
@@ -48,27 +47,63 @@ export function useInlineTextEdit(slot: PageSlot) {
         x: (e.clientX - rect.left) / scale,
         y: (e.clientY - rect.top) / scale,
       };
+      const canvas = wrapper.querySelector("canvas");
+      const page = await pdfProxy.getPage(slot.src);
+      const ann = useAnnotationStore.getState();
 
+      // ---- Reflow path: a safely-reflowable paragraph ----
+      try {
+        const paras = await getPageParagraphs(pdfProxy, slot.src, file);
+        const para = findParagraphAt(paras, point);
+        if (para && para.reflow === "reflowable" && para.fontName) {
+          const identity = await identifyFont(page, para.fontName);
+          const reflowFont = await resolveReflowFont(
+            identity,
+            para.fontSize,
+            para.text,
+          );
+          if (reflowFont) {
+            const box = {
+              x: para.x0,
+              y: para.y0,
+              width: para.x1 - para.x0,
+              height: para.y1 - para.y0,
+            };
+            const colors = sampleRunColors(canvas, box, display.width, display.height);
+            const annotation = createAnnotation("text", slot.id, {
+              ...box,
+              text: para.text,
+              fontSize: para.fontSize,
+              lineHeight: para.lineHeight,
+              align: para.align,
+              fontFamily: reflowFont.cssFamily,
+              fontCategory: identity.category,
+              color: colors.text,
+              coverColor: colors.background,
+              reflow: true,
+              reflowFontId: reflowFont.fontId,
+              sourceFont: identity.realName || undefined,
+            });
+            ann.add(annotation);
+            ann.setEditing(annotation.id);
+            return;
+          }
+        }
+      } catch {
+        // fall through to the single-run inline edit
+      }
+
+      // ---- Fallback: single-run cover & replace ----
       const run = await findTextRunAt(pdfProxy, slot.src, point, file);
       if (!run) return;
-
-      const page = await pdfProxy.getPage(slot.src);
       const identity = await identifyFont(page, run.fontName);
-
       const box = {
         x: run.x - PAD_X,
         y: run.y,
         width: run.width + PAD_X * 2,
         height: run.height + run.size * DESCENDER_PAD,
       };
-      const colors = sampleRunColors(
-        wrapper.querySelector("canvas"),
-        box,
-        display.width,
-        display.height,
-      );
-
-      const ann = useAnnotationStore.getState();
+      const colors = sampleRunColors(canvas, box, display.width, display.height);
       const annotation = createAnnotation("text", slot.id, {
         ...box,
         text: run.str,
@@ -81,7 +116,7 @@ export function useInlineTextEdit(slot: PageSlot) {
         coverColor: colors.background,
         sourceFont: identity.realName || undefined,
       });
-      ann.add(annotation); // selects it + is one undo step
+      ann.add(annotation);
       ann.setEditing(annotation.id);
     },
     [slot],

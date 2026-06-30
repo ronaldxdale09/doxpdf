@@ -94,16 +94,28 @@ export function sampleRunColors(
   }));
   buckets.sort((a, b) => b.n - a.n);
 
+  const total = buckets.reduce((s, b) => s + b.n, 0);
   const bg = buckets[0];
   const dist = (c: { r: number; g: number; b: number }) =>
     Math.abs(c.r - bg.r) + Math.abs(c.g - bg.g) + Math.abs(c.b - bg.b);
 
-  // Ink: the most frequent bucket that's clearly different from the background.
-  let ink = buckets.find((c) => dist(c) > 60) ?? null;
-  if (!ink) {
-    // Low-contrast run (e.g. faint text) — take the farthest bucket instead.
-    ink = buckets.reduce((a, c) => (dist(c) > dist(a) ? c : a), bg);
+  // Ink: the color *most different* from the background that still has real
+  // coverage — i.e. the solid glyph core. Using the most *frequent* non-bg
+  // bucket instead would pick the anti-aliased edge mid-tone (a washed-out blend
+  // of paper + ink), shifting the color — worst for thin/small text.
+  const minN = Math.max(2, total * 0.004);
+  let ink: (typeof buckets)[number] | null = null;
+  let bestDist = 40; // require meaningful contrast with the background
+  for (const c of buckets) {
+    if (c === bg || c.n < minN) continue;
+    const d = dist(c);
+    if (d > bestDist) {
+      bestDist = d;
+      ink = c;
+    }
   }
+  // Fallback for low-contrast/faint runs: the single farthest bucket.
+  if (!ink) ink = buckets.reduce((a, c) => (dist(c) > dist(a) ? c : a), bg);
 
   return {
     background: toHex(bg.r, bg.g, bg.b),

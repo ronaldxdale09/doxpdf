@@ -64,7 +64,7 @@ export interface Annotation {
   bold?: boolean;
   italic?: boolean;
   underline?: boolean;
-  align?: "left" | "center" | "right";
+  align?: "left" | "center" | "right" | "justify";
   author?: string;
 
   // Inline text edits (cover & replace over existing PDF text)
@@ -74,6 +74,14 @@ export interface Annotation {
   fontCategory?: "sans" | "serif" | "mono";
   /** Real name of the font this edit is replacing (provenance / future reuse). */
   sourceFont?: string;
+
+  // Reflowable paragraph edits (live re-wrap; see docs/reflow-text-editing.md)
+  /** This text annotation is a reflowable paragraph (own layout engine). */
+  reflow?: boolean;
+  /** Baseline-to-baseline spacing in points (from the original paragraph). */
+  lineHeight?: number;
+  /** Key into the reflow font registry — measured & baked with these bytes. */
+  reflowFontId?: string;
 
   // Stamps
   stampVariant?: string;

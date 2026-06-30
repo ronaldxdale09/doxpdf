@@ -14,11 +14,14 @@ import { drawAnnotation, embedFonts } from "./bake";
 import { downloadBytes, fileToBytes, getBaseName } from "./file";
 import { fontKey, loadEmbeddableFont } from "./fonts/embeddable";
 import { applyFormValues, type FormValues } from "./forms";
+import { getReflowFontBytes } from "./reflow/fonts";
 
 /**
- * Embed metric-compatible faces (Liberation Sans) for the inline-edit text runs
- * in `annotations`, keyed by `fontKey`. Returns an empty map when nothing needs
- * one (so the common export does no extra work and never loads fontkit).
+ * Embed the custom faces a bake needs, keyed for `drawAnnotation`:
+ *  - inline edits → metric-compatible Liberation Sans, keyed by `fontKey`
+ *  - reflow paragraphs → their exact resolved bytes, keyed by `reflowFontId`
+ * Returns an empty map when nothing needs one (so the common export never even
+ * loads fontkit).
  */
 async function buildCustomFonts(
   doc: PDFDocument,
@@ -26,28 +29,46 @@ async function buildCustomFonts(
 ): Promise<Map<string, PDFFont>> {
   const map = new Map<string, PDFFont>();
   const combos = new Map<string, { bold: boolean; italic: boolean; category: Annotation["fontCategory"] }>();
+  const reflowIds = new Set<string>();
   for (const a of annotations) {
-    // Inline edits carry a cover + classified category; free text boxes don't.
     if (a.type !== "text" || !a.coverColor) continue;
+    if (a.reflow) {
+      if (a.reflowFontId) reflowIds.add(a.reflowFontId);
+      continue;
+    }
     const key = fontKey(a.fontCategory, !!a.bold, !!a.italic);
     if (!combos.has(key))
       combos.set(key, { bold: !!a.bold, italic: !!a.italic, category: a.fontCategory });
   }
-  if (combos.size === 0) return map;
+  if (combos.size === 0 && reflowIds.size === 0) return map;
 
   let registered = false;
+  const ensureFontkit = async () => {
+    if (registered) return;
+    const mod = await import("@pdf-lib/fontkit");
+    doc.registerFontkit((mod.default ?? mod) as Parameters<PDFDocument["registerFontkit"]>[0]);
+    registered = true;
+  };
+
   for (const [key, c] of combos) {
     const bytes = await loadEmbeddableFont(c.category, c.bold, c.italic);
     if (!bytes) continue; // serif/mono or unavailable → base-14 in bake
-    if (!registered) {
-      const mod = await import("@pdf-lib/fontkit");
-      doc.registerFontkit((mod.default ?? mod) as Parameters<PDFDocument["registerFontkit"]>[0]);
-      registered = true;
-    }
+    await ensureFontkit();
     try {
       map.set(key, await doc.embedFont(bytes, { subset: true }));
     } catch {
-      // Embedding failed for this face — bake falls back to base-14.
+      // Embedding failed — bake falls back to base-14.
+    }
+  }
+
+  for (const id of reflowIds) {
+    const bytes = getReflowFontBytes(id);
+    if (!bytes) continue;
+    await ensureFontkit();
+    try {
+      map.set(id, await doc.embedFont(bytes, { subset: true }));
+    } catch {
+      // Embedding failed — that reflow block falls back to a plain draw.
     }
   }
   return map;
