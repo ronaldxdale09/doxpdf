@@ -1,0 +1,69 @@
+{
+  "name": "doxpdf",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A fast, privacy-first PDF editor that runs entirely in your browser — no account, no uploads, no watermarks.",
+  "keywords": [
+    "pdf",
+    "pdf-editor",
+    "pdf-annotation",
+    "privacy",
+    "local-first",
+    "client-side",
+    "nextjs",
+    "react",
+    "pdfjs",
+    "pdf-lib"
+  ],
+  "author": "Ronald Dale Fuentebella",
+  "license": "MIT",
+  "homepage": "https://github.com/ronaldxdale09/doxpdf#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ronaldxdale09/doxpdf.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ronaldxdale09/doxpdf/issues"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "copy-pdf-worker": "node scripts/copy-pdf-worker.mjs",
+    "postinstall": "node scripts/copy-pdf-worker.mjs"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.6.0",
+    "@pdf-lib/fontkit": "^1.1.1",
+    "@tanstack/react-query": "^5.101.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "jszip": "^3.10.1",
+    "lucide-react": "^1.22.0",
+    "nanoid": "^5.1.16",
+    "next": "16.2.9",
+    "next-themes": "^0.4.6",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^5.4.296",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-pdf": "^10.4.1",
+    "react-rnd": "^10.5.3",
+    "shadcn": "^4.12.0",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.6.0",
+    "tw-animate-css": "^1.4.0",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.9",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,236 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display);
+  --font-heading: var(--font-display);
+  --color-signal: var(--signal);
+  --color-signal-foreground: var(--signal-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/*
+ * DoxPDF — "precision instrument" identity.
+ * Cool near-black ink chrome + warm bone light surfaces + a single warm amber
+ * signal accent (references signatures, seals, highlighter ink). The white
+ * document is always the hero; the app is a quiet, precise instrument.
+ */
+:root {
+  --background: oklch(0.965 0.004 95); /* warm bone */
+  --foreground: oklch(0.205 0.013 264); /* cool ink */
+  --card: oklch(1 0 0); /* paper */
+  --card-foreground: oklch(0.205 0.013 264);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.205 0.013 264);
+  --primary: oklch(0.215 0.014 264);
+  --primary-foreground: oklch(0.985 0.003 95);
+  --secondary: oklch(0.935 0.005 95);
+  --secondary-foreground: oklch(0.255 0.014 264);
+  --muted: oklch(0.935 0.005 95);
+  --muted-foreground: oklch(0.515 0.012 264);
+  --accent: oklch(0.928 0.007 92);
+  --accent-foreground: oklch(0.215 0.014 264);
+  --destructive: oklch(0.585 0.212 24);
+  --border: oklch(0.892 0.006 95);
+  --input: oklch(0.9 0.006 95);
+  --ring: oklch(0.78 0.14 72); /* amber focus */
+  --signal: oklch(0.79 0.155 73); /* amber */
+  --signal-foreground: oklch(0.24 0.045 70);
+  --signal-soft: oklch(0.84 0.15 80 / 0.4); /* highlighter wash */
+  --success: oklch(0.7 0.13 162);
+  --success-foreground: oklch(0.985 0.003 95);
+  --chart-1: oklch(0.79 0.155 73);
+  --chart-2: oklch(0.55 0.1 250);
+  --chart-3: oklch(0.7 0.13 162);
+  --chart-4: oklch(0.5 0.012 264);
+  --chart-5: oklch(0.32 0.012 264);
+  --radius: 0.5rem;
+  --sidebar: oklch(0.978 0.004 95);
+  --sidebar-foreground: oklch(0.205 0.013 264);
+  --sidebar-primary: oklch(0.215 0.014 264);
+  --sidebar-primary-foreground: oklch(0.985 0.003 95);
+  --sidebar-accent: oklch(0.928 0.007 92);
+  --sidebar-accent-foreground: oklch(0.215 0.014 264);
+  --sidebar-border: oklch(0.892 0.006 95);
+  --sidebar-ring: oklch(0.78 0.14 72);
+}
+
+.dark {
+  --background: oklch(0.17 0.012 265); /* cool ink */
+  --foreground: oklch(0.93 0.004 265);
+  --card: oklch(0.207 0.013 265); /* graphite */
+  --card-foreground: oklch(0.93 0.004 265);
+  --popover: oklch(0.207 0.013 265);
+  --popover-foreground: oklch(0.93 0.004 265);
+  --primary: oklch(0.92 0.004 265);
+  --primary-foreground: oklch(0.2 0.012 265);
+  --secondary: oklch(0.26 0.013 265);
+  --secondary-foreground: oklch(0.93 0.004 265);
+  --muted: oklch(0.255 0.013 265);
+  --muted-foreground: oklch(0.665 0.013 265);
+  --accent: oklch(0.278 0.014 265);
+  --accent-foreground: oklch(0.93 0.004 265);
+  --destructive: oklch(0.66 0.19 24);
+  --border: oklch(0.3 0.014 265);
+  --input: oklch(0.32 0.014 265);
+  --ring: oklch(0.8 0.15 73); /* amber */
+  --signal: oklch(0.81 0.16 75);
+  --signal-foreground: oklch(0.21 0.035 70);
+  --signal-soft: oklch(0.8 0.15 78 / 0.3);
+  --success: oklch(0.72 0.14 162);
+  --success-foreground: oklch(0.15 0.02 162);
+  --chart-1: oklch(0.81 0.16 75);
+  --chart-2: oklch(0.65 0.12 250);
+  --chart-3: oklch(0.72 0.14 162);
+  --chart-4: oklch(0.7 0.012 265);
+  --chart-5: oklch(0.5 0.012 265);
+  --sidebar: oklch(0.185 0.012 265);
+  --sidebar-foreground: oklch(0.93 0.004 265);
+  --sidebar-primary: oklch(0.81 0.16 75);
+  --sidebar-primary-foreground: oklch(0.21 0.035 70);
+  --sidebar-accent: oklch(0.278 0.014 265);
+  --sidebar-accent-foreground: oklch(0.93 0.004 265);
+  --sidebar-border: oklch(0.3 0.014 265);
+  --sidebar-ring: oklch(0.8 0.15 73);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01";
+    text-rendering: optimizeLegibility;
+  }
+  html {
+    @apply font-sans antialiased;
+  }
+  ::selection {
+    background: var(--signal-soft);
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in oklch, var(--foreground) 18%, transparent);
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in oklch, var(--foreground) 30%, transparent);
+    background-clip: content-box;
+  }
+}
+
+@layer components {
+  /* Signature element: a hand-laid highlighter swipe behind a keyword. */
+  .mark {
+    background-image: linear-gradient(
+      120deg,
+      var(--signal-soft),
+      var(--signal-soft)
+    );
+    background-repeat: no-repeat;
+    background-position: 0 82%;
+    background-size: 100% 0.5em;
+    padding-inline: 0.06em;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+  .mark-draw {
+    background-size: 0 0.5em;
+    animation: mark-draw 0.75s cubic-bezier(0.62, 0, 0.2, 1) 0.35s both;
+  }
+  /* Precision drafting texture. */
+  .dot-grid {
+    background-image: radial-gradient(
+      color-mix(in oklch, var(--foreground) 9%, transparent) 1px,
+      transparent 1px
+    );
+    background-size: 22px 22px;
+  }
+  /* A touch denser/darker for hero backgrounds, where it carries the surface. */
+  .dot-grid-hero {
+    background-image: radial-gradient(
+      color-mix(in oklch, var(--foreground) 13%, transparent) 1.1px,
+      transparent 1.1px
+    );
+    background-size: 19px 19px;
+  }
+  /* Hairline technical frame used around panels/previews. */
+  .ring-hairline {
+    box-shadow: 0 0 0 1px color-mix(in oklch, var(--foreground) 8%, transparent);
+  }
+}
+
+@keyframes mark-draw {
+  from {
+    background-size: 0 0.5em;
+  }
+  to {
+    background-size: 100% 0.5em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .mark-draw {
+    background-size: 100% 0.5em;
+  }
+}
