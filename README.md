@@ -45,7 +45,9 @@ Add captures to docs/screenshots/ and uncomment:
 | | |
 | --- | --- |
 | 🪄 **Instant, local** | Drop a PDF → in-browser preview & editing. Nothing is uploaded. |
-| 🔡 **Edit real text** | Double-click any text to edit it **in place**, in a matching font — a built-in font identifier picks the closest face. |
+| 🔡 **Edit real text** | Double-click any text to edit it **in place** — **reflowable at the paragraph level** — in a matching font. A built-in font identifier picks the closest face, and edit colors are sampled straight from the page. |
+| 🅰️ **Bundled font library** | Restyle text with **~30 open-licensed fonts** (sans / serif / mono) that ship with the app — rendered via `@font-face` and **embedded + subset** on export, so nothing needs a CDN and the text stays selectable. |
+| 🕶️ **Secure redaction** | *True* content removal, not a black box: pages with redactions are **rasterized** so no text survives underneath. An **on-device PII scan** (emails, SSNs, cards, phones, IPs) finds sensitive text for you, and every export is **verified** — the download is blocked if any redacted string is still extractable. |
 | ✍️ **Annotate** | Text, freehand pen / marker / highlighter, shapes (rect / ellipse / line / arrow), highlight, sticky notes, stamps, images. |
 | 🎛️ **Direct manipulation** | Select, move, resize, **snap & alignment guides**, a context properties bar, and an arrange/inspector panel. |
 | ↩️ **Unlimited undo/redo** | Every action is a history step. |
@@ -65,8 +67,11 @@ Your device  →  DoxPDF (in your browser)  →  Your device
 
 - **No cloud upload.** PDFs are parsed and edited client-side with PDF.js + pdf-lib.
 - **No tracking, no accounts.** There is no backend that sees your files.
-- **Assets are self-hosted.** The PDF.js worker, cmaps, and fonts are served from
-  your own origin (copied into `public/` on install) — not a third-party CDN.
+- **Assets are self-hosted.** The PDF.js worker, cmaps, and the bundled text fonts
+  are served from your own origin (copied into `public/` on install) — not a
+  third-party CDN.
+- **Redaction is verified, not trusted.** PII is detected and removed on your
+  device, and the exported file is re-checked so nothing leaks.
 - **Works offline** once loaded.
 
 ## 🧰 Tech stack
@@ -84,7 +89,7 @@ Your device  →  DoxPDF (in your browser)  →  Your device
 git clone https://github.com/ronaldxdale09/doxpdf.git
 cd doxpdf
 
-pnpm install   # postinstall copies the PDF.js worker/cmaps/fonts into public/
+pnpm install   # postinstall copies the PDF.js worker/cmaps + bundled text fonts into public/
 pnpm dev       # http://localhost:3000
 ```
 
@@ -98,7 +103,8 @@ Then drop a PDF onto the landing page (or `/editor`) and start editing.
 | `pnpm build` | Production build (must stay green) |
 | `pnpm start` | Serve the production build |
 | `pnpm lint` | Run ESLint |
-| `pnpm copy-pdf-worker` | Refresh the local PDF.js worker / cmaps / fonts in `public/` |
+| `pnpm copy-pdf-worker` | Refresh the local PDF.js worker / cmaps / standard fonts in `public/` |
+| `pnpm fetch-fonts` | Re-download the bundled text-font library into `public/fonts/` |
 
 ## 🏗️ Architecture
 
@@ -130,6 +136,17 @@ how the original glyphs are located, how the font is identified (and reused on
 screen, pixel-perfect), and how the replacement is baked with a metric-compatible
 font so the layout never shifts.
 
+### Secure redaction
+
+Painting a black box over text does **not** remove it — the characters underneath
+stay selectable and copyable, the classic (and repeatedly catastrophic) redaction
+leak. DoxPDF instead **rasterizes** every page that has a redaction (so no text,
+vector, or image data survives), paints the bars onto the raster, and rebuilds
+that page as a flattened image; pages without redactions are copied untouched so
+their text stays selectable. An on-device PII scan (`lib/pdf/pii.ts`) finds
+sensitive strings to mark, and `verifyRedactions` re-opens the export to prove no
+redacted text is recoverable — a failed check **blocks the download**.
+
 ### Project structure
 
 ```
@@ -153,8 +170,10 @@ src/
 
 ## 🗺️ Roadmap
 
-Shipped: annotations, inline text editing, pages & signatures, forms,
-multi-format export, search, metadata, sharing, snapping, keyboard shortcuts.
+Shipped: annotations, **reflowable** inline text editing, a **~30-font
+embeddable library**, **secure redaction** (true removal + on-device PII scan +
+verified export), pages & signatures, forms, multi-format export, search,
+metadata, sharing, snapping, keyboard shortcuts.
 
 Planned / help wanted:
 
@@ -163,7 +182,7 @@ Planned / help wanted:
 - **Merge / split across documents** — the slot model is ready; needs a
   second-source importer.
 - **Metric-exact serif/mono export fonts** — drop-in (the loader already accepts them).
-- **Whole-line inline editing**, true (redaction-grade) text removal, and rotated-page support.
+- **Rotated-page support** for baked annotations, and **search-and-replace**.
 
 ## 🤝 Contributing
 

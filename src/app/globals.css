@@ -148,6 +148,33 @@
   --sidebar-ring: oklch(0.705 0.13 44);
 }
 
+/*
+ * Landing surface — a bold, near-black canvas with a punchy golden "signal" and
+ * a grape-purple marker: an editorial, high-contrast riff used only on the
+ * marketing page. Scoped to `.landing`, it overrides the dark-theme tokens on
+ * the same element, so the editor keeps its calm terracotta identity.
+ */
+.landing {
+  --background: oklch(0.155 0.004 75); /* near-black, faintly warm */
+  --foreground: oklch(0.965 0.006 90); /* bright ivory */
+  --card: oklch(0.2 0.005 75); /* lifted panel */
+  --card-foreground: oklch(0.965 0.006 90);
+  --popover: oklch(0.2 0.005 75);
+  --popover-foreground: oklch(0.965 0.006 90);
+  --muted: oklch(0.24 0.006 75);
+  --muted-foreground: oklch(0.705 0.012 82); /* warm gray body copy */
+  --accent: oklch(0.26 0.007 75);
+  --accent-foreground: oklch(0.965 0.006 90);
+  --border: oklch(0.3 0.006 75);
+  --input: oklch(0.32 0.006 75);
+  --signal: oklch(0.845 0.155 92); /* golden pop — the headline voice */
+  --signal-foreground: oklch(0.19 0.03 80); /* near-black ink on gold */
+  --signal-soft: oklch(0.845 0.155 92 / 0.16);
+  --ring: oklch(0.845 0.155 92);
+  --grape: oklch(0.41 0.14 328); /* deep grape — the marker accent */
+  --grape-bright: oklch(0.55 0.17 324);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -220,6 +247,25 @@
   .ring-hairline {
     box-shadow: 0 0 0 1px color-mix(in oklch, var(--foreground) 8%, transparent);
   }
+  /* Landing: a rough grape marker swiped behind a keyword, in golden ink. */
+  .marker {
+    display: inline-block;
+    background: var(--grape);
+    color: var(--signal);
+    padding: 0 0.2em;
+    border-radius: 3px;
+    transform: rotate(-1.4deg);
+  }
+  /* Landing: a blinking editor caret trailing the hero line. */
+  .caret {
+    display: inline-block;
+    width: 0.055em;
+    height: 0.82em;
+    margin-left: 0.05em;
+    vertical-align: text-bottom;
+    background: var(--signal);
+    animation: caret-blink 1.1s steps(1, end) infinite;
+  }
 }
 
 @keyframes mark-draw {
@@ -228,6 +274,12 @@
   }
   to {
     background-size: 100% 0.5em;
+  }
+}
+
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
   }
 }
 
