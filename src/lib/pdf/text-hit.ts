@@ -39,8 +39,16 @@ async function itemsFor(
 
 /**
  * Return the text run under `point` (page points, top-left origin), or null.
- * A small vertical slack absorbs the gap between glyph box and click; when
- * several boxes overlap the point, the smallest (most specific) wins.
+ *
+ * Hit-testing is deliberately forgiving so a double-click "just works" even when
+ * it lands in the kerning gap between runs, on the space between two words, or a
+ * hair outside a glyph box:
+ *  1. Each run's box is grown by font-size-proportional slack (wider sideways,
+ *     and downward to cover descenders). Overlapping boxes resolve to the
+ *     smallest (most specific) run.
+ *  2. If nothing contains the point, we snap to the *nearest* run within a tight
+ *     radius — so a click between words picks the adjacent word — while a click
+ *     out in a blank margin still resolves to nothing.
  *
  * `token` keys the cache — pass the current `File` so it invalidates on reopen.
  */
@@ -52,23 +60,52 @@ export async function findTextRunAt(
 ): Promise<TextItemBox | null> {
   if (src <= 0) return null;
   const items = await itemsFor(proxy, src, token);
-  const slackY = 2;
 
   let best: TextItemBox | null = null;
   let bestArea = Infinity;
+  let nearest: TextItemBox | null = null;
+  let nearestDist = Infinity;
+
   for (const it of items) {
     if (!it.str.trim()) continue;
+    const size = it.size || it.height || 10;
+    const slackX = Math.max(1.5, 0.3 * size);
+    const slackTop = Math.max(2, 0.2 * it.height);
+    const slackBottom = Math.max(2.5, 0.35 * size); // descenders + leading
+
     const within =
-      point.x >= it.x &&
-      point.x <= it.x + it.width &&
-      point.y >= it.y - slackY &&
-      point.y <= it.y + it.height + slackY;
-    if (!within) continue;
-    const area = Math.max(it.width, 1) * Math.max(it.height, 1);
-    if (area < bestArea) {
-      best = it;
-      bestArea = area;
+      point.x >= it.x - slackX &&
+      point.x <= it.x + it.width + slackX &&
+      point.y >= it.y - slackTop &&
+      point.y <= it.y + it.height + slackBottom;
+    if (within) {
+      const area = Math.max(it.width, 1) * Math.max(it.height, 1);
+      if (area < bestArea) {
+        best = it;
+        bestArea = area;
+      }
+      continue;
+    }
+
+    // Distance from the point to the (un-slacked) box, for the snap fallback.
+    const dx =
+      point.x < it.x
+        ? it.x - point.x
+        : point.x > it.x + it.width
+          ? point.x - (it.x + it.width)
+          : 0;
+    const dy =
+      point.y < it.y
+        ? it.y - point.y
+        : point.y > it.y + it.height
+          ? point.y - (it.y + it.height)
+          : 0;
+    const dist = Math.hypot(dx, dy);
+    const radius = Math.max(6, 0.9 * size);
+    if (dist < radius && dist < nearestDist) {
+      nearest = it;
+      nearestDist = dist;
     }
   }
-  return best;
+  return best ?? nearest;
 }

@@ -278,7 +278,12 @@ export async function getPageParagraphs(
   return p;
 }
 
-/** The paragraph whose box contains `point` (page points), or null. */
+/**
+ * The paragraph whose box contains `point` (page points), or null. The box is
+ * grown by font-size-proportional slack so a click just outside the text still
+ * resolves to it (and keeps the nicer reflow path instead of dropping to a
+ * single-run edit). When boxes overlap, the smallest (most specific) wins.
+ */
 export function findParagraphAt(
   paras: Paragraph[],
   point: { x: number; y: number },
@@ -286,11 +291,13 @@ export function findParagraphAt(
   let best: Paragraph | null = null;
   let bestArea = Infinity;
   for (const p of paras) {
+    const padX = Math.max(2, 0.5 * p.fontSize);
+    const padY = Math.max(2, 0.35 * p.fontSize);
     if (
-      point.x >= p.x0 - 2 &&
-      point.x <= p.x1 + 2 &&
-      point.y >= p.y0 - 2 &&
-      point.y <= p.y1 + 2
+      point.x >= p.x0 - padX &&
+      point.x <= p.x1 + padX &&
+      point.y >= p.y0 - padY &&
+      point.y <= p.y1 + padY
     ) {
       const area = (p.x1 - p.x0) * (p.y1 - p.y0);
       if (area < bestArea) {
