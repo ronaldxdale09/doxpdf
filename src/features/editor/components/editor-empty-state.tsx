@@ -1,6 +1,6 @@
 "use client";
 
-import { Brand } from "@/components/brand";
+import { Brand, BrandMark } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UploadDropzone } from "@/features/upload/components/upload-dropzone";
 
@@ -18,15 +18,19 @@ export function EditorEmptyState() {
       <div className="relative flex flex-1 items-center justify-center overflow-hidden p-6">
         <div
           aria-hidden
-          className="pointer-events-none absolute top-1/2 left-1/2 -z-10 h-[24rem] w-[44rem] max-w-[130vw] -translate-x-1/2 -translate-y-[60%] rounded-full bg-[radial-gradient(closest-side,oklch(0.8_0.16_75/0.14),transparent)]"
+          className="dot-grid pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_55%_55%_at_50%_42%,black,transparent_75%)]"
+        />
+        <BrandMark
+          aria-hidden
+          className="text-signal/[0.05] pointer-events-none absolute top-1/2 left-1/2 size-[24rem] -translate-x-1/2 -translate-y-[125%] rotate-12"
         />
 
-        <div className="animate-in fade-in slide-in-from-bottom-4 w-full max-w-md text-center duration-700">
+        <div className="animate-in fade-in slide-in-from-bottom-4 relative w-full max-w-md text-center duration-700">
           <span className="text-muted-foreground inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.18em] uppercase">
-            <span className="bg-signal size-1.5 rounded-full" />
+            <BrandMark className="text-signal size-3.5" />
             Local-first PDF editor
           </span>
-          <h1 className="font-display mt-4 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+          <h1 className="font-display mt-5 text-3xl font-medium tracking-[-0.01em] text-balance sm:text-4xl">
             Open a PDF to start editing.
           </h1>
           <p className="text-muted-foreground mx-auto mt-3 max-w-sm text-pretty">

@@ -2,10 +2,10 @@ import type { Metadata, Viewport } from "next";
 import {
   Caveat,
   Dancing_Script,
-  Geist,
   Geist_Mono,
   Great_Vibes,
-  Space_Grotesk,
+  Hanken_Grotesk,
+  Newsreader,
 } from "next/font/google";
 
 import { Providers } from "@/components/providers";
@@ -13,9 +13,12 @@ import { APP_DESCRIPTION, APP_NAME, APP_TAGLINE } from "@/lib/constants";
 
 import "./globals.css";
 
-const geistSans = Geist({
+// Body & UI face — a warm humanist grotesque (the "Claude" voice): clean,
+// approachable, human-centered. Carries all interface text and the wordmark.
+const hankenGrotesk = Hanken_Grotesk({
   variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -23,11 +26,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Display face — technical, characterful, used with restraint for headings.
-const spaceGrotesk = Space_Grotesk({
+// Display face — an editorial serif (the "Anthropic" voice): used for
+// headlines and pull quotes, with true italics, to feel considered and human.
+const newsreader = Newsreader({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  style: ["normal", "italic"],
+  display: "swap",
 });
 
 // Handwriting faces for typed signatures.
@@ -67,8 +72,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+    { media: "(prefers-color-scheme: light)", color: "#F5F3EE" },
+    { media: "(prefers-color-scheme: dark)", color: "#1a1714" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -83,7 +88,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${dancingScript.variable} ${caveat.variable} ${greatVibes.variable} h-full antialiased`}
+      className={`${hankenGrotesk.variable} ${geistMono.variable} ${newsreader.variable} ${dancingScript.variable} ${caveat.variable} ${greatVibes.variable} h-full antialiased`}
     >
       <body className="bg-background text-foreground min-h-full font-sans">
         <Providers>{children}</Providers>

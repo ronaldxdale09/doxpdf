@@ -3,30 +3,27 @@ import Link from "next/link";
 import { APP_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-/** The DoxPDF logo mark — a document with an amber highlighter stroke. */
+/**
+ * The DoxPDF mark — a leaf with a folded corner. Reads as a page at 14px next
+ * to text and as a bold, singular silhouette blown up to a 500px watermark.
+ * Inherits `currentColor`, so callers set the color (terracotta by default in
+ * the wordmark).
+ */
 export function BrandMark({ className }: { className?: string }) {
   return (
-    <span
-      className={cn(
-        "bg-foreground text-background relative grid size-8 shrink-0 place-items-center rounded-[0.5rem]",
-        className,
-      )}
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className={cn("size-7", className)}
+      stroke="currentColor"
+      strokeWidth={1.55}
+      strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden
     >
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        className="size-[1.05rem]"
-        stroke="currentColor"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-        <path d="M16 3H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7z" />
-      </svg>
-      <span className="bg-signal absolute top-[57%] left-1/2 h-[3px] w-[11px] -translate-x-1/2 rounded-full" />
-    </span>
+      <path d="M6 3H14L18 7V21H6V3Z" />
+      <path d="M14 3V7H18" />
+    </svg>
   );
 }
 
@@ -42,9 +39,9 @@ export function Brand({
 }) {
   const content = (
     <span className={cn("flex items-center gap-2.5", className)}>
-      <BrandMark />
+      <BrandMark className="text-signal" />
       {showWordmark && (
-        <span className="font-display text-[1.05rem] leading-none font-semibold tracking-tight">
+        <span className="font-sans text-[1.15rem] leading-none font-semibold tracking-[-0.01em]">
           Dox<span className="text-muted-foreground">PDF</span>
         </span>
       )}
