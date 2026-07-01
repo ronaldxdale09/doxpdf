@@ -10,6 +10,8 @@ import { APP_NAME } from "@/lib/constants";
 import type { Annotation } from "@/types/annotations";
 import type { PageSize, PageSlot, PdfMetadata } from "@/types/pdf";
 
+import { getFontOption, loadCatalogFontBytes } from "@/lib/fonts/catalog";
+
 import { drawAnnotation, embedFonts } from "./bake";
 import { downloadBytes, fileToBytes, getBaseName } from "./file";
 import { fontKey, loadEmbeddableFont } from "./fonts/embeddable";
@@ -30,8 +32,12 @@ async function buildCustomFonts(
   const map = new Map<string, PDFFont>();
   const combos = new Map<string, { bold: boolean; italic: boolean; category: Annotation["fontCategory"] }>();
   const reflowIds = new Set<string>();
+  const catalogIds = new Set<string>();
   for (const a of annotations) {
-    if (a.type !== "text" || !a.coverColor) continue;
+    if (a.type !== "text") continue;
+    // A bundled font chosen from the picker (free text, or a re-fonted edit).
+    if (a.fontId && getFontOption(a.fontId)?.file) catalogIds.add(a.fontId);
+    if (!a.coverColor) continue; // the rest applies to inline edits only
     if (a.reflow) {
       if (a.reflowFontId) reflowIds.add(a.reflowFontId);
       continue;
@@ -40,7 +46,8 @@ async function buildCustomFonts(
     if (!combos.has(key))
       combos.set(key, { bold: !!a.bold, italic: !!a.italic, category: a.fontCategory });
   }
-  if (combos.size === 0 && reflowIds.size === 0) return map;
+  if (combos.size === 0 && reflowIds.size === 0 && catalogIds.size === 0)
+    return map;
 
   let registered = false;
   const ensureFontkit = async () => {
@@ -69,6 +76,17 @@ async function buildCustomFonts(
       map.set(id, await doc.embedFont(bytes, { subset: true }));
     } catch {
       // Embedding failed — that reflow block falls back to a plain draw.
+    }
+  }
+
+  for (const id of catalogIds) {
+    const bytes = await loadCatalogFontBytes(id);
+    if (!bytes) continue;
+    await ensureFontkit();
+    try {
+      map.set(id, await doc.embedFont(bytes, { subset: true }));
+    } catch {
+      // Embedding failed — that text falls back to a base-14 face in bake.
     }
   }
   return map;
@@ -144,6 +162,18 @@ export async function buildPdfBytes(
     }
     applyMetadata(srcDoc, metadata);
     return srcDoc.save({ useObjectStreams: true });
+  }
+
+  // Page operations rebuild the document from copied pages, which drops the
+  // AcroForm (and the values the user entered). Fill + flatten on the source
+  // first so those values are baked into the page content and survive the copy.
+  if (Object.keys(formValues).length > 0) {
+    try {
+      applyFormValues(srcDoc.getForm(), formValues);
+      srcDoc.getForm().flatten();
+    } catch (error) {
+      console.error("[DoxPDF] could not preserve form values across page ops", error);
+    }
   }
 
   const out = await PDFDocument.create();

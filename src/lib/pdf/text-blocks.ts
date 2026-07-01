@@ -203,7 +203,10 @@ function classifyAlignment(lines: Line[], x0: number, x1: number, fs: number): A
   const leftFlush = lines.every((l) => Math.abs(l.x0 - x0) <= tol);
   const body = lines.slice(0, -1);
   const bodyRightFlush = body.every((l) => Math.abs(l.x1 - x1) <= tol);
-  if (leftFlush && bodyRightFlush) return "justify";
+  // Justify needs at least TWO body lines flush to the right edge: with a single
+  // body line it trivially defines `x1`, so a ragged-left two-line paragraph
+  // would be misread as justified. Require real evidence before justifying.
+  if (leftFlush && bodyRightFlush && body.length >= 2) return "justify";
   if (leftFlush) return "left";
   if (lines.every((l) => Math.abs(l.x1 - x1) <= tol)) return "right";
   if (lines.every((l) => Math.abs(l.x0 - x0 - (x1 - l.x1)) <= tol)) return "center";

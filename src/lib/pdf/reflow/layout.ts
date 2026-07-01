@@ -118,7 +118,11 @@ export function layoutParagraph(
   maxWidth: number,
   align: Align,
 ): ParagraphLayout {
-  const spaceWidth = measure(" ") || measure(" ") || 1;
+  // Space advance, with fallbacks for fonts whose U+0020 (and U+00A0) have a
+  // zero advance (some CJK/Indic faces): fall back to ~a quarter-em derived
+  // from a digit width, then 1pt as a last resort.
+  const spaceWidth =
+    measure(" ") || measure(" ") || measure("0") * 0.5 || 1;
   const placements: WordPlacement[] = [];
   let line = 0;
 

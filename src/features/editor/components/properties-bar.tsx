@@ -6,6 +6,7 @@ import {
   AlignRight,
   ArrowUpRight,
   Bold,
+  ChevronDown,
   Circle,
   Copy,
   Italic,
@@ -17,6 +18,8 @@ import {
   Trash2,
   Underline,
 } from "lucide-react";
+
+import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +33,11 @@ import {
   HIGHLIGHT_COLORS,
   STAMP_PRESETS,
 } from "@/lib/annotations/defaults";
+import {
+  FONT_GROUPS,
+  type FontOption,
+  getFontOption,
+} from "@/lib/fonts/catalog";
 import { cn } from "@/lib/utils";
 import { useAnnotationStore } from "@/store/annotation-store";
 import { useEditorStore } from "@/store/editor-store";
@@ -187,6 +195,26 @@ export function PropertiesBar() {
       {/* Text controls */}
       {type === "text" && (
         <>
+          {/* Font face — hidden for reflow paragraphs, whose font follows the
+              source text and is embedded on export. */}
+          {!target?.reflow && (
+            <>
+              <FontFacePicker
+                value={target?.fontId ?? settings.fontId}
+                onChange={(face) => {
+                  if (target) {
+                    commit();
+                    update(target.id, {
+                      fontId: face.id,
+                      fontFamily: face.cssFamily,
+                      fontCategory: face.category,
+                    });
+                  } else settings.setFontFace(face);
+                }}
+              />
+              <span className="bg-border mx-0.5 h-5 w-px" />
+            </>
+          )}
           <div className="flex items-center">
             <IconToggle
               active={!!target?.bold}
@@ -293,6 +321,15 @@ export function PropertiesBar() {
         </Popover>
       )}
 
+      {/* Sticky-note text — authored here now that the side inspector is gone. */}
+      {type === "note" && target && (
+        <NotePopover
+          value={target.text ?? ""}
+          onFocus={commit}
+          onChange={(text) => update(target.id, { text })}
+        />
+      )}
+
       {/* Opacity */}
       {type !== "text" && (
         <RangePopover
@@ -331,6 +368,127 @@ export function PropertiesBar() {
         </>
       )}
     </div>
+  );
+}
+
+function NotePopover({
+  value,
+  onFocus,
+  onChange,
+}: {
+  value: string;
+  onFocus: () => void;
+  onChange: (text: string) => void;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger
+        render={
+          <button
+            type="button"
+            aria-label="Note text"
+            className="hover:bg-accent rounded-full px-2.5 py-1.5 text-sm"
+          />
+        }
+      >
+        Note
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-2">
+        <textarea
+          autoFocus
+          value={value}
+          onFocus={onFocus}
+          onChange={(e) => onChange(e.target.value)}
+          rows={4}
+          placeholder="Write a note…"
+          className="border-input bg-background focus:ring-ring/50 w-full resize-none rounded-md border p-2 text-sm outline-none focus:ring-2"
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function FontFacePicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (face: FontOption) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const current = getFontOption(value) ?? FONT_GROUPS[0].fonts[0];
+
+  const groups = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return FONT_GROUPS;
+    return FONT_GROUPS.map((g) => ({
+      group: g.group,
+      fonts: g.fonts.filter((f) => f.label.toLowerCase().includes(q)),
+    })).filter((g) => g.fonts.length > 0);
+  }, [query]);
+
+  return (
+    <Popover>
+      <PopoverTrigger
+        render={
+          <button
+            type="button"
+            aria-label="Font"
+            className="hover:bg-accent flex items-center gap-1.5 rounded-full py-1.5 pr-2 pl-2.5 text-sm"
+          />
+        }
+      >
+        <span
+          className="max-w-[7rem] truncate"
+          style={{ fontFamily: current.cssFamily }}
+        >
+          {current.label}
+        </span>
+        <ChevronDown className="size-3 shrink-0 opacity-60" />
+      </PopoverTrigger>
+      <PopoverContent className="w-60 p-0" align="start">
+        <div className="border-b p-1.5">
+          <input
+            autoFocus
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search fonts…"
+            className="bg-muted/50 focus:ring-ring/40 h-8 w-full rounded-md px-2.5 text-sm outline-none focus:ring-2"
+          />
+        </div>
+        <div className="max-h-[19rem] overflow-y-auto p-1">
+          {groups.length === 0 && (
+            <div className="text-muted-foreground px-2 py-6 text-center text-sm">
+              No fonts found
+            </div>
+          )}
+          {groups.map((g) => (
+            <div key={g.group} className="mb-1">
+              <div className="text-muted-foreground px-2 pt-1.5 pb-1 font-mono text-[10px] tracking-[0.14em] uppercase">
+                {g.group}
+              </div>
+              {g.fonts.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => onChange(f)}
+                  className={cn(
+                    "hover:bg-accent flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-left",
+                    current.id === f.id && "bg-accent",
+                  )}
+                  style={{ fontFamily: f.cssFamily }}
+                >
+                  <span className="truncate text-[15px]">{f.label}</span>
+                  <span className="text-muted-foreground shrink-0 text-xs">
+                    Ag
+                  </span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 

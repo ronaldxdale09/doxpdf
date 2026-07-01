@@ -1,12 +1,8 @@
-"use client";
-
 import { Star } from "lucide-react";
-import { useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
-const REPO = "ronaldxdale09/doxpdf";
-const REPO_URL = `https://github.com/${REPO}`;
+const REPO_URL = "https://github.com/ronaldxdale09/doxpdf";
 
 function GitHubMark({ className }: { className?: string }) {
   return (
@@ -16,33 +12,12 @@ function GitHubMark({ className }: { className?: string }) {
   );
 }
 
-function formatCount(n: number): string {
-  if (n >= 1000) return (n / 1000).toFixed(n >= 9950 ? 0 : 1).replace(/\.0$/, "") + "k";
-  return String(n);
-}
-
-/** "Star on GitHub" button with a live star count (fetched client-side). */
+/**
+ * "Star on GitHub" link. Deliberately static — no runtime call to GitHub's API,
+ * so opening DoxPDF makes zero third-party requests and the privacy promise
+ * ("nothing leaves your device") holds on the marketing pages too.
+ */
 export function GitHubStar({ className }: { className?: string }) {
-  const [stars, setStars] = useState<number | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    // Public, no-auth call. Soft-fails on rate limit — the button still works.
-    fetch(`https://api.github.com/repos/${REPO}`, {
-      headers: { Accept: "application/vnd.github+json" },
-    })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (active && d && typeof d.stargazers_count === "number") {
-          setStars(d.stargazers_count);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, []);
-
   return (
     <a
       href={REPO_URL}
@@ -57,12 +32,6 @@ export function GitHubStar({ className }: { className?: string }) {
       <GitHubMark className="size-[1.05rem]" />
       <Star className="size-3.5 transition-colors group-hover:fill-signal group-hover:text-signal" />
       <span className="hidden sm:inline">Star</span>
-      {stars !== null && (
-        <span className="flex items-center gap-1.5">
-          <span className="bg-border h-3.5 w-px" />
-          <span className="tabular-nums">{formatCount(stars)}</span>
-        </span>
-      )}
     </a>
   );
 }

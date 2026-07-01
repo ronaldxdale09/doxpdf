@@ -40,6 +40,8 @@ interface AnnotationState {
   /** Copy a slot's annotations onto another slot (e.g. when duplicating a page). */
   cloneForSlot: (fromId: string, toId: string) => void;
   clearAll: () => void;
+  /** Hard reset — drops annotations, selection, AND history (new file opened). */
+  reset: () => void;
 
   // --- selection ---
   select: (id: string | null) => void;
@@ -159,6 +161,15 @@ export const useAnnotationStore = create<AnnotationState>((set, get) => {
       pushHistory();
       set({ annotations: [], selectedId: null });
     },
+
+    reset: () =>
+      set({
+        annotations: [],
+        selectedId: null,
+        editingId: null,
+        past: [],
+        future: [],
+      }),
 
     select: (id) =>
       set((s) => ({

@@ -61,6 +61,8 @@ export interface Annotation {
   text?: string;
   fontSize?: number; // points
   fontFamily?: string;
+  /** Catalog font id (see lib/fonts/catalog). Drives on-screen + embedded font. */
+  fontId?: string;
   bold?: boolean;
   italic?: boolean;
   underline?: boolean;

@@ -9,6 +9,9 @@ import {
   clamp,
   getNextZoom,
 } from "@/lib/constants";
+import { clearReflowFonts } from "@/lib/pdf/reflow/fonts";
+import { useAnnotationStore } from "@/store/annotation-store";
+import { useSearchStore } from "@/store/search-store";
 import type {
   FitMode,
   PageSize,
@@ -16,6 +19,13 @@ import type {
   PdfMetadata,
   ScrollRequest,
 } from "@/types/pdf";
+
+/** Clear per-document state that lives in sibling stores (annotations, search). */
+function resetDependentStores() {
+  useAnnotationStore.getState().reset();
+  useSearchStore.getState().clear();
+  clearReflowFonts();
+}
 
 interface DocumentState {
   /** The currently open file. Source of truth for both rendering and export. */
@@ -89,7 +99,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   sidebarOpen: true,
   scrollRequest: null,
 
-  openFile: (file) =>
+  openFile: (file) => {
+    // A fresh document must not inherit the previous file's annotations,
+    // undo/redo history, or search matches (their slot ids won't line up).
+    resetDependentStores();
     set({
       file,
       numPages: 0,
@@ -101,9 +114,11 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       formValues: {},
       pages: [],
       scrollRequest: null,
-    }),
+    });
+  },
 
-  closeFile: () =>
+  closeFile: () => {
+    resetDependentStores();
     set({
       file: null,
       numPages: 0,
@@ -117,7 +132,8 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       scrollRequest: null,
       zoom: DEFAULT_ZOOM,
       fitMode: "custom",
-    }),
+    });
+  },
 
   setNumPages: (n) =>
     set((s) => ({

@@ -64,3 +64,5 @@ Thumbs.db
 .claude/
 AGENTS.md
 CLAUDE.md
+/public/fonts/
+/public/test.pdf

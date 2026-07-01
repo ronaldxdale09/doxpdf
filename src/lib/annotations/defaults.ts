@@ -50,7 +50,12 @@ export const DRAW_PRESETS: Record<
 };
 
 export const DEFAULT_FONT_SIZE = 16; // points
-export const DEFAULT_FONT_FAMILY = "Helvetica";
+
+// The font catalog (base-14 + bundled library) lives in lib/fonts/catalog.
+export { DEFAULT_FONT_OPTION } from "@/lib/fonts/catalog";
+import { DEFAULT_FONT_OPTION } from "@/lib/fonts/catalog";
+
+export const DEFAULT_FONT_FAMILY = DEFAULT_FONT_OPTION.cssFamily;
 
 /**
  * Build a new annotation with sensible per-type defaults. Geometry (x/y/width/
@@ -80,7 +85,9 @@ export function createAnnotation(
     case "text":
       base.text = "";
       base.fontSize = DEFAULT_FONT_SIZE;
-      base.fontFamily = DEFAULT_FONT_FAMILY;
+      base.fontId = DEFAULT_FONT_OPTION.id;
+      base.fontFamily = DEFAULT_FONT_OPTION.cssFamily;
+      base.fontCategory = DEFAULT_FONT_OPTION.category;
       base.align = "left";
       break;
     case "note":

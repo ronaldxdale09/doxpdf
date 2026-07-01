@@ -230,41 +230,49 @@ export async function drawAnnotation(
           color: hexToRgb(a.coverColor),
         });
       }
-      const text = a.text?.trim();
+      // Lay out the reflow engine on the RAW text (matching the on-screen
+      // ReflowBlock, which also uses the untrimmed value) so wrap/line count and
+      // the cover height stay in sync; use the trimmed value only to skip empties.
+      const rawText = a.text ?? "";
+      const text = rawText.trim();
       if (!text) break;
       const size = a.fontSize ?? 16;
 
-      // Reflowable paragraph: lay out with the shared engine, draw word-by-word.
-      if (a.reflow && a.reflowFontId) {
-        const rfont = customFonts?.get(a.reflowFontId);
-        if (rfont) {
-          const lineHeight = a.lineHeight ?? size * 1.2;
-          const align = (a.align ?? "left") as Align;
-          const ascent = rfont.heightAtSize(size, { descender: false });
-          const firstBaseline = H - a.y - ascent;
-          const lo = layoutParagraph(
-            text,
-            (s) => rfont.widthOfTextAtSize(s, size),
-            a.width,
-            align,
-          );
-          for (const p of lo.placements) {
-            page.drawText(p.word, {
-              x: a.x + p.x,
-              y: firstBaseline - p.line * lineHeight,
-              size,
-              font: rfont,
-              color,
-              opacity,
-            });
-          }
-          break;
+      // Reflowable paragraph: lay out with the shared engine and draw word-by-word.
+      // Prefer the embedded reflow font; if it failed to embed, fall back to the
+      // closest base-14 face — still wrapped through the engine, never a single
+      // overflowing line.
+      if (a.reflow) {
+        const rfont =
+          (a.reflowFontId ? customFonts?.get(a.reflowFontId) : undefined) ??
+          pickFont(fonts, a.fontCategory, !!a.bold, !!a.italic);
+        const lineHeight = a.lineHeight ?? size * 1.2;
+        const align = (a.align ?? "left") as Align;
+        const ascent = rfont.heightAtSize(size, { descender: false });
+        const firstBaseline = H - a.y - ascent;
+        const lo = layoutParagraph(
+          rawText,
+          (s) => rfont.widthOfTextAtSize(s, size),
+          a.width,
+          align,
+        );
+        for (const p of lo.placements) {
+          page.drawText(p.word, {
+            x: a.x + p.x,
+            y: firstBaseline - p.line * lineHeight,
+            size,
+            font: rfont,
+            color,
+            opacity,
+          });
         }
-        // no reflow font embedded — fall through to a plain single-line draw
+        break;
       }
 
-      // Prefer an embedded metric-compatible face (exact widths); else base-14.
+      // Prefer the chosen bundled font (embedded by id), then an embedded
+      // metric-compatible face (inline edits), then base-14.
       const font =
+        (a.fontId ? customFonts?.get(a.fontId) : undefined) ??
         customFonts?.get(fontKey(a.fontCategory, !!a.bold, !!a.italic)) ??
         pickFont(fonts, a.fontCategory, !!a.bold, !!a.italic);
       // Inline edits align to the glyph box (no inset) and stay on one line to
@@ -283,7 +291,7 @@ export async function drawAnnotation(
       break;
     }
     case "note": {
-      // Marker square + an embedded PDF text note for the content.
+      // Sticky-note marker.
       page.drawRectangle({
         x: a.x,
         y: boxY,
@@ -294,6 +302,31 @@ export async function drawAnnotation(
         borderWidth: 0.5,
         opacity,
       });
+      // Preserve the note's text on flatten: draw it as a wrapped caption to the
+      // right of the marker so the comment isn't silently dropped on export.
+      const noteText = a.text?.trim();
+      if (noteText) {
+        const ns = Math.min(Math.max(a.height * 0.5, 8), 11);
+        const lo = layoutParagraph(
+          noteText,
+          (s) => fonts.normal.widthOfTextAtSize(s, ns),
+          168,
+          "left",
+        );
+        const capX = a.x + a.width + 5;
+        const capTop = H - a.y - fonts.normal.heightAtSize(ns, { descender: false });
+        const capLine = ns * 1.28;
+        for (const p of lo.placements) {
+          page.drawText(p.word, {
+            x: capX + p.x,
+            y: capTop - p.line * capLine,
+            size: ns,
+            font: fonts.normal,
+            color: rgb(0.11, 0.11, 0.12),
+            opacity,
+          });
+        }
+      }
       break;
     }
     case "stamp": {

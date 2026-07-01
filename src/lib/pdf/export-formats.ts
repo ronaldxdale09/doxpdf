@@ -23,21 +23,33 @@ async function renderPages(
   const doc = await loadDoc(bytes);
   const mime = format === "png" ? "image/png" : "image/jpeg";
   const blobs: Blob[] = [];
-  for (let i = 1; i <= doc.numPages; i++) {
-    const page = await doc.getPage(i);
-    const viewport = page.getViewport({ scale });
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.ceil(viewport.width);
-    canvas.height = Math.ceil(viewport.height);
-    const ctx = canvas.getContext("2d");
-    if (!ctx) continue;
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    await page.render({ canvas, canvasContext: ctx, viewport }).promise;
-    const blob = await new Promise<Blob | null>((res) =>
-      canvas.toBlob(res, mime, format === "jpeg" ? 0.92 : undefined),
-    );
-    if (blob) blobs.push(blob);
+  try {
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      const canvas = document.createElement("canvas");
+      try {
+        const viewport = page.getViewport({ scale });
+        canvas.width = Math.ceil(viewport.width);
+        canvas.height = Math.ceil(viewport.height);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) continue;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        await page.render({ canvas, canvasContext: ctx, viewport }).promise;
+        const blob = await new Promise<Blob | null>((res) =>
+          canvas.toBlob(res, mime, format === "jpeg" ? 0.92 : undefined),
+        );
+        if (blob) blobs.push(blob);
+      } finally {
+        // Free the page's operator list and the (potentially large) canvas so
+        // exporting a big document doesn't retain every page until GC.
+        page.cleanup();
+        canvas.width = 0;
+        canvas.height = 0;
+      }
+    }
+  } finally {
+    await doc.destroy();
   }
   return blobs;
 }
@@ -67,16 +79,24 @@ export async function exportImages(
 async function extractText(bytes: Uint8Array): Promise<string[]> {
   const doc = await loadDoc(bytes);
   const pages: string[] = [];
-  for (let i = 1; i <= doc.numPages; i++) {
-    const page = await doc.getPage(i);
-    const content = await page.getTextContent();
-    pages.push(
-      content.items
-        .map((it) => ("str" in it ? it.str : ""))
-        .join(" ")
-        .replace(/\s+\n/g, "\n")
-        .trim(),
-    );
+  try {
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      try {
+        const content = await page.getTextContent();
+        pages.push(
+          content.items
+            .map((it) => ("str" in it ? it.str : ""))
+            .join(" ")
+            .replace(/\s+\n/g, "\n")
+            .trim(),
+        );
+      } finally {
+        page.cleanup();
+      }
+    }
+  } finally {
+    await doc.destroy();
   }
   return pages;
 }

@@ -31,7 +31,8 @@
     "start": "next start",
     "lint": "eslint",
     "copy-pdf-worker": "node scripts/copy-pdf-worker.mjs",
-    "postinstall": "node scripts/copy-pdf-worker.mjs"
+    "postinstall": "node scripts/copy-pdf-worker.mjs && node scripts/fetch-fonts.mjs",
+    "fetch-fonts": "node scripts/fetch-fonts.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

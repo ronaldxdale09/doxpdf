@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 
 import {
   DRAW_PRESETS,
@@ -50,7 +51,12 @@ export function AnnotationLayer({ slotId, src, rotation }: AnnotationLayerProps)
   const pageSizes = useDocumentStore((s) => s.pageSizes);
   const defaultPageSize = useDocumentStore((s) => s.defaultPageSize);
 
-  const annotations = useAnnotationStore((s) => s.annotations);
+  // Subscribe only to THIS slot's annotations (shallow-compared) so a freehand
+  // stroke — which updates the store ~60×/s — re-renders just the page being
+  // drawn on, not every other visible page's layer.
+  const pageAnnotations = useAnnotationStore(
+    useShallow((s) => s.annotations.filter((a) => a.pageId === slotId)),
+  );
   const selectedId = useAnnotationStore((s) => s.selectedId);
   const editingId = useAnnotationStore((s) => s.editingId);
   const add = useAnnotationStore((s) => s.add);
@@ -89,7 +95,6 @@ export function AnnotationLayer({ slotId, src, rotation }: AnnotationLayerProps)
   }, []);
 
   const isCreation = CREATION_TOOLS.has(activeTool);
-  const pageAnnotations = annotations.filter((a) => a.pageId === slotId);
 
   const toPagePoint = (clientX: number, clientY: number) => {
     const r = containerRef.current!.getBoundingClientRect();
@@ -127,6 +132,9 @@ export function AnnotationLayer({ slotId, src, rotation }: AnnotationLayerProps)
         height: 30,
         color: settings.color,
         fontSize: settings.fontSize,
+        fontId: settings.fontId,
+        fontFamily: settings.fontFamily,
+        fontCategory: settings.fontCategory,
       });
       add(a);
       setEditingId(a.id);
@@ -306,7 +314,13 @@ export function AnnotationLayer({ slotId, src, rotation }: AnnotationLayerProps)
       // z-10 keeps the overlay above react-pdf's text layer (z-index 2), which
       // otherwise escapes the page's (non-)stacking context and intercepts clicks.
       className="absolute inset-0 z-10"
-      style={{ pointerEvents: isCreation ? "auto" : "none", cursor }}
+      style={{
+        pointerEvents: isCreation ? "auto" : "none",
+        // Stop the browser from panning/scrolling the page mid-stroke on touch
+        // devices, so a freehand/shape drag actually draws.
+        touchAction: isCreation ? "none" : undefined,
+        cursor,
+      }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}

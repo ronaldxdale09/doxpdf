@@ -1,9 +1,11 @@
 import { create } from "zustand";
 
+import { DEFAULT_FONT_SIZE, DRAW_PRESETS } from "@/lib/annotations/defaults";
 import {
-  DEFAULT_FONT_SIZE,
-  DRAW_PRESETS,
-} from "@/lib/annotations/defaults";
+  DEFAULT_FONT_OPTION,
+  type FontCategory,
+  type FontOption,
+} from "@/lib/fonts/catalog";
 import type { DrawMode } from "@/types/annotations";
 import type { ShapeKind } from "@/types/pdf";
 
@@ -13,6 +15,9 @@ interface ToolSettingsState {
   strokeWidth: number;
   opacity: number;
   fontSize: number;
+  fontId: string;
+  fontFamily: string;
+  fontCategory: FontCategory;
   drawMode: DrawMode;
   shapeKind: ShapeKind;
   shapeFilled: boolean;
@@ -23,6 +28,7 @@ interface ToolSettingsState {
   setStrokeWidth: (width: number) => void;
   setOpacity: (opacity: number) => void;
   setFontSize: (size: number) => void;
+  setFontFace: (face: FontOption) => void;
   setDrawMode: (mode: DrawMode) => void;
   setShapeKind: (kind: ShapeKind) => void;
   setShapeFilled: (filled: boolean) => void;
@@ -35,6 +41,9 @@ export const useToolSettingsStore = create<ToolSettingsState>((set) => ({
   strokeWidth: 2,
   opacity: 1,
   fontSize: DEFAULT_FONT_SIZE,
+  fontId: DEFAULT_FONT_OPTION.id,
+  fontFamily: DEFAULT_FONT_OPTION.cssFamily,
+  fontCategory: DEFAULT_FONT_OPTION.category,
   drawMode: "pen",
   shapeKind: "rect",
   shapeFilled: false,
@@ -45,6 +54,12 @@ export const useToolSettingsStore = create<ToolSettingsState>((set) => ({
   setStrokeWidth: (strokeWidth) => set({ strokeWidth }),
   setOpacity: (opacity) => set({ opacity }),
   setFontSize: (fontSize) => set({ fontSize }),
+  setFontFace: (face) =>
+    set({
+      fontId: face.id,
+      fontFamily: face.cssFamily,
+      fontCategory: face.category,
+    }),
   setDrawMode: (drawMode) =>
     set({ drawMode, strokeWidth: DRAW_PRESETS[drawMode].strokeWidth }),
   setShapeKind: (shapeKind) => set({ shapeKind }),

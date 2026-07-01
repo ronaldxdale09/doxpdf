@@ -15,10 +15,21 @@ import { createMeasurer } from "./measure";
 
 const byteRegistry = new Map<string, Uint8Array>();
 const renderFamilyCache = new Map<Uint8Array, string>();
+// Bundled faces are shared byte objects — reuse one id so repeated edits (and
+// undo/redo cycles) don't grow `byteRegistry` without bound.
+const bundledIdCache = new Map<Uint8Array, string>();
 
 /** Bytes for a resolved reflow font (renderer + bake look them up by id). */
 export function getReflowFontBytes(id: string): Uint8Array | null {
   return byteRegistry.get(id) ?? null;
+}
+
+/** Drop per-document embedded-font bytes (call when a new file is opened). */
+export function clearReflowFonts() {
+  byteRegistry.clear();
+  bundledIdCache.clear();
+  // `renderFamilyCache` is intentionally kept: the FontFaces it names are still
+  // registered in `document.fonts` and safe to reuse across documents.
 }
 
 export interface ReflowFont {
@@ -72,7 +83,8 @@ export async function resolveReflowFont(
   const bundled = await loadEmbeddableFont(identity.category, identity.bold, identity.italic);
   if (bundled) {
     const family = await registerRenderFace(bundled);
-    const fontId = `rf-${nanoid(8)}`;
+    const fontId = bundledIdCache.get(bundled) ?? `rf-${nanoid(8)}`;
+    bundledIdCache.set(bundled, fontId);
     byteRegistry.set(fontId, bundled);
     return {
       fontId,

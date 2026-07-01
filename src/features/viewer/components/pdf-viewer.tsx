@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
-import { cn } from "@/lib/utils";
+import { cn, prefersReducedMotion } from "@/lib/utils";
 import { useAnnotationStore } from "@/store/annotation-store";
 import { useDocumentStore } from "@/store/document-store";
 import { useEditorStore } from "@/store/editor-store";
@@ -129,7 +129,10 @@ export function PdfViewer() {
   useEffect(() => {
     if (!scrollRequest) return;
     const el = pageEls.current.get(scrollRequest.page);
-    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    el?.scrollIntoView({
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      block: "start",
+    });
   }, [scrollRequest]);
 
   // Ctrl/⌘ + wheel to zoom (also fires on trackpad pinch).

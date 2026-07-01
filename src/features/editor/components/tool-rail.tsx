@@ -64,11 +64,29 @@ export function ToolRail() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const insertImage = (file: File) => {
+    const MAX_DIM = 2400; // cap the embedded copy so a huge photo can't bloat the PDF
     const reader = new FileReader();
+    reader.onerror = () => toast.error("Couldn't read that image.");
     reader.onload = () => {
-      const src = reader.result as string;
+      const raw = reader.result as string;
       const img = new Image();
+      img.onerror = () => toast.error("That image couldn't be loaded.");
       img.onload = () => {
+        // Downscale oversized images through a canvas before embedding.
+        let src = raw;
+        const longest = Math.max(img.width, img.height);
+        if (longest > MAX_DIM) {
+          const scale = MAX_DIM / longest;
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const mime = file.type === "image/png" ? "image/png" : "image/jpeg";
+            src = canvas.toDataURL(mime, mime === "image/jpeg" ? 0.9 : undefined);
+          }
+        }
         const { currentPage, pages, pageSizes, defaultPageSize } =
           useDocumentStore.getState();
         const slot = pages[currentPage - 1];
@@ -90,7 +108,7 @@ export function ToolRail() {
         );
         setActiveTool("select");
       };
-      img.src = src;
+      img.src = raw;
     };
     reader.readAsDataURL(file);
   };
