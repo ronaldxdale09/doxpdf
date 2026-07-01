@@ -118,6 +118,11 @@ export function createAnnotation(
       base.stampVariant = "approved";
       base.color = "#22A06B";
       break;
+    case "redaction":
+      // Solid opaque bar; on export the content beneath is truly removed.
+      base.color = "#000000";
+      base.opacity = 1;
+      break;
     case "image":
       break;
   }

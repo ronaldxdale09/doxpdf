@@ -18,7 +18,8 @@ export type AnnotationType =
   | "highlight"
   | "note"
   | "stamp"
-  | "image";
+  | "image"
+  | "redaction";
 
 export type DrawMode = "pen" | "marker" | "highlighter";
 

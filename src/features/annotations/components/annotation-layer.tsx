@@ -31,6 +31,7 @@ const CREATION_TOOLS = new Set([
   "shape",
   "note",
   "stamp",
+  "redaction",
 ]);
 
 interface AnnotationLayerProps {
@@ -106,7 +107,11 @@ export function AnnotationLayer({ slotId, src, rotation }: AnnotationLayerProps)
 
   const resolveType = (): AnnotationType | null => {
     if (activeTool === "shape") return settings.shapeKind;
-    if (["text", "draw", "highlight", "note", "stamp"].includes(activeTool)) {
+    if (
+      ["text", "draw", "highlight", "note", "stamp", "redaction"].includes(
+        activeTool,
+      )
+    ) {
       return activeTool as AnnotationType;
     }
     return null;
@@ -196,6 +201,18 @@ export function AnnotationLayer({ slotId, src, rotation }: AnnotationLayerProps)
         height: 0,
         color: settings.highlightColor,
         opacity: 0.4,
+      });
+      add(a);
+      creatingRef.current = { id: a.id, type, start };
+      return;
+    }
+    if (type === "redaction") {
+      const a = createAnnotation("redaction", slotId, {
+        x: start.x,
+        y: start.y,
+        width: 0,
+        height: 0,
+        color: "#000000",
       });
       add(a);
       creatingRef.current = { id: a.id, type, start };

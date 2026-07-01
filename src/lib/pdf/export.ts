@@ -16,6 +16,7 @@ import { drawAnnotation, embedFonts } from "./bake";
 import { downloadBytes, fileToBytes, getBaseName } from "./file";
 import { fontKey, loadEmbeddableFont } from "./fonts/embeddable";
 import { applyFormValues, type FormValues } from "./forms";
+import { applyRedactions, type RedactRegion } from "./redact";
 import { getReflowFontBytes } from "./reflow/fonts";
 
 /**
@@ -111,6 +112,57 @@ function isDefaultOrder(pages: PageSlot[], srcCount: number): boolean {
   );
 }
 
+/** Output page indices (0-based) that carry at least one redaction. */
+export function redactedPageIndices(
+  pages: PageSlot[],
+  annotations: Annotation[],
+): number[] {
+  const idx: number[] = [];
+  pages.forEach((slot, i) => {
+    if (annotations.some((a) => a.type === "redaction" && a.pageId === slot.id))
+      idx.push(i);
+  });
+  return idx;
+}
+
+/** Redaction regions per output page index, from the redaction annotations. */
+function collectRedactions(
+  slots: PageSlot[],
+  annotations: Annotation[],
+): Map<number, RedactRegion[]> {
+  const map = new Map<number, RedactRegion[]>();
+  slots.forEach((slot, i) => {
+    const regs = annotations
+      .filter((a) => a.type === "redaction" && a.pageId === slot.id)
+      .map((a) => ({
+        x: a.x,
+        y: a.y,
+        width: a.width,
+        height: a.height,
+        color: a.color,
+      }));
+    if (regs.length) map.set(i, regs);
+  });
+  return map;
+}
+
+/**
+ * Stamp metadata and serialize. If any pages carry redactions, rebuild them as
+ * rasterized images first so the removed content genuinely can't be recovered.
+ */
+async function finalize(
+  doc: PDFDocument,
+  regionsByPage: Map<number, RedactRegion[]>,
+  metadata: PdfMetadata | null,
+): Promise<Uint8Array> {
+  applyMetadata(doc, metadata);
+  if (regionsByPage.size === 0) return doc.save({ useObjectStreams: true });
+  const bytes = await doc.save({ useObjectStreams: true });
+  const redacted = await applyRedactions(bytes, regionsByPage);
+  applyMetadata(redacted, metadata);
+  return redacted.save({ useObjectStreams: true });
+}
+
 function applyMetadata(out: PDFDocument, metadata: PdfMetadata | null) {
   if (metadata) {
     if (metadata.title) out.setTitle(metadata.title);
@@ -160,8 +212,7 @@ export async function buildPdfBytes(
         }
       }
     }
-    applyMetadata(srcDoc, metadata);
-    return srcDoc.save({ useObjectStreams: true });
+    return finalize(srcDoc, collectRedactions(pages, annotations), metadata);
   }
 
   // Page operations rebuild the document from copied pages, which drops the
@@ -222,8 +273,7 @@ export async function buildPdfBytes(
     }
   }
 
-  applyMetadata(out, metadata);
-  return out.save({ useObjectStreams: true });
+  return finalize(out, collectRedactions(slots, annotations), metadata);
 }
 
 /** Build the document and trigger a browser download. */

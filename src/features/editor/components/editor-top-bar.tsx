@@ -37,13 +37,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { buildPdfBytes, exportPdf } from "@/lib/pdf/export";
+import { buildPdfBytes, redactedPageIndices } from "@/lib/pdf/export";
 import {
   exportImages,
   exportMarkdown,
   exportText,
 } from "@/lib/pdf/export-formats";
-import { getBaseName } from "@/lib/pdf/file";
+import { downloadBytes, getBaseName } from "@/lib/pdf/file";
+import { verifyRedactions } from "@/lib/pdf/redact";
 import { useAnnotationStore } from "@/store/annotation-store";
 import { useDocumentStore } from "@/store/document-store";
 import { useEditorStore } from "@/store/editor-store";
@@ -74,13 +75,37 @@ export function EditorTopBar() {
       const base = getBaseName(file.name);
 
       if (format === "pdf") {
-        await exportPdf(file, {
-          pages: doc.pages,
+        const bytes = await buildPdfBytes(
+          file,
+          doc.pages,
           annotations,
-          defaultSize: doc.defaultPageSize,
-          metadata: doc.metadata,
-          formValues: doc.formValues,
-        });
+          doc.defaultPageSize,
+          doc.metadata,
+          doc.formValues,
+        );
+        // If anything was redacted, prove the content is gone before handing the
+        // file over — and refuse to download if the check somehow fails.
+        const redactedPages = redactedPageIndices(doc.pages, annotations);
+        if (redactedPages.length > 0) {
+          const strings = annotations
+            .filter((a) => a.type === "redaction" && a.text?.trim())
+            .map((a) => a.text!.trim());
+          const report = await verifyRedactions(bytes, redactedPages, strings);
+          if (!report.ok) {
+            toast.error(
+              "Redaction check failed — download blocked. Please re-check your marks.",
+            );
+            return;
+          }
+          downloadBytes(bytes, `${base}.pdf`);
+          toast.success(
+            `Redaction verified — ${redactedPages.length} page${
+              redactedPages.length > 1 ? "s" : ""
+            } secured, no recoverable text.`,
+          );
+          return;
+        }
+        downloadBytes(bytes, `${base}.pdf`);
       } else {
         const bytes = await buildPdfBytes(
           file,

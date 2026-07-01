@@ -22,6 +22,7 @@ import { ShortcutsDialog } from "./shortcuts-dialog";
 import { DocumentError, DocumentLoading } from "./editor-states";
 import { FloatingToolbar } from "./floating-toolbar";
 import { PropertiesBar } from "./properties-bar";
+import { RedactionControls } from "./redaction-controls";
 import { ThumbnailSidebar } from "./thumbnail-sidebar";
 import { ToolRail } from "./tool-rail";
 
@@ -91,6 +92,7 @@ export function EditorShell() {
             <PdfViewer />
             <ToolRail />
             <PropertiesBar />
+            <RedactionControls />
             <SearchBar />
             <FloatingToolbar />
             <FirstRunHint />

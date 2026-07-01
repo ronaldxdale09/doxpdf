@@ -2,8 +2,8 @@ import {
   FileSignature,
   Highlighter,
   Layers,
-  Search,
   Share2,
+  ShieldCheck,
   Type,
   type LucideIcon,
 } from "lucide-react";
@@ -21,6 +21,12 @@ interface Capability {
 }
 
 const CAPABILITIES: Capability[] = [
+  {
+    icon: ShieldCheck,
+    title: "Redact for real",
+    description:
+      "Mark regions or auto-find sensitive info — the content underneath is truly removed, then verified.",
+  },
   {
     icon: Type,
     title: "Edit real text",
@@ -41,11 +47,6 @@ const CAPABILITIES: Capability[] = [
     icon: Layers,
     title: "Organize pages",
     description: "Reorder, rotate, duplicate, delete, and insert pages.",
-  },
-  {
-    icon: Search,
-    title: "Search the document",
-    description: "Find any text with highlighted matches and quick navigation.",
   },
   {
     icon: Share2,
@@ -128,8 +129,8 @@ export default function HomePage() {
             </h1>
 
             <p className="text-muted-foreground mx-auto mt-5 max-w-md text-[1.05rem] text-pretty">
-              Highlight, annotate, sign, edit real text, and export — entirely on
-              your device. Nothing is uploaded, logged, or stored.
+              Edit real text, annotate, sign, and truly redact — entirely on your
+              device. Nothing is uploaded, logged, or stored.
             </p>
 
             <div className="animate-in fade-in zoom-in-95 mx-auto mt-9 max-w-md [animation-delay:120ms] duration-700">

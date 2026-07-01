@@ -15,6 +15,7 @@ const RESIZABLE: Record<AnnotationType, boolean> = {
   highlight: true,
   stamp: true,
   image: true,
+  redaction: true,
   note: false,
   draw: false,
   line: false,
@@ -241,6 +242,14 @@ function AnnotationVisual({
           className="size-full"
           style={{ background: a.color, mixBlendMode: "multiply" }}
         />
+      );
+    case "redaction":
+      // Editor preview: solid bar + a faint hatch so it reads as a *pending*
+      // redaction (the export paints a clean solid bar and removes the content).
+      return (
+        <div className="size-full overflow-hidden" style={{ background: a.color }}>
+          <div className="size-full opacity-[0.16] [background:repeating-linear-gradient(45deg,transparent,transparent_5px,#fff_5px,#fff_6px)]" />
+        </div>
       );
     case "note":
       return <NoteVisual a={a} />;

@@ -32,7 +32,8 @@ export type EditorTool =
   | "image"
   | "note"
   | "stamp"
-  | "signature";
+  | "signature"
+  | "redaction";
 
 /** Concrete shape produced by the "shape" meta-tool. */
 export type ShapeKind = "rect" | "ellipse" | "line" | "arrow";

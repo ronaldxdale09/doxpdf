@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  EyeOff,
   Hand,
   Highlighter,
   ImagePlus,
@@ -54,6 +55,9 @@ const GROUPS: ToolDef[][] = [
     { tool: "stamp", icon: Stamp, label: "Stamp", available: true, shortcut: "K" },
     { tool: "image", icon: ImagePlus, label: "Image", available: true },
     { tool: "signature", icon: Signature, label: "Signature", available: true },
+  ],
+  [
+    { tool: "redaction", icon: EyeOff, label: "Redact", available: true, shortcut: "R" },
   ],
 ];
 
